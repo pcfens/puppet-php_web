@@ -1,0 +1,25 @@
+server {
+    listen 80;
+    server_name <%= @domain %> <% @aliases.each do |val| %> <%= val %> <% end %>;
+    
+    access_log /var/log/nginx/<%= @domain %>.access.log;
+
+    root <%= @webroot_real %>;
+    index index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~\.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/<%= @domain %>.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
+
+    location ~/\.ht {
+        deny all;
+    }
+
+}

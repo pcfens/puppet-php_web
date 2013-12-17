@@ -1,0 +1,41 @@
+<VirtualHost *:80>
+    # AssignUserID <%= @user_real %> <%= @group_real %>
+    
+    ServerAdmin unix@wm.edu
+    DocumentRoot <%= @webroot_real %>
+    ServerName <%= @domain %>
+
+    <% if @wordpress %>
+    <Directory <%= @webroot_real %>>
+    <IfModule mod_rewrite.c>
+        RewriteEngine On
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule . /index.php [L]
+    </IfModule>
+    </Directory>
+    <% end %>
+
+    <% @aliases.each do |val| %>
+    ServerAlias <%= val %>
+    <% end %>
+
+    CustomLog ${APACHE_LOG_DIR}/<%= @domain %>.access.log vhost_combined
+    ErrorLog ${APACHE_LOG_DIR}/<%= @domain %>.error.log
+    
+    AddHandler php5-fcgi .php
+    Action php5-fcgi /php5.fastcgi virtual
+    Alias /php5.fastcgi /usr/lib/cgi-bin/php5.fastcgi.<%= @domain %>
+    FastCGIExternalServer /usr/lib/cgi-bin/php5.fastcgi.<%= @domain %> -socket /var/run/<%= @domain %>.sock
+    Options -Indexes -MultiViews
+    <% if @require_login %>
+    <Location / >
+        AuthType CAS
+        require valid-user
+    </Location>
+    <% end %> 
+    <FilesMatch "^ping|status$">
+        SetHandler php-script
+    </FilesMatch>
+
+</VirtualHost>
