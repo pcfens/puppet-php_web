@@ -1,6 +1,6 @@
 class php_web::apache::config {
   # TODO: Manage mod_security
-  
+
   augeas { 'apache2.conf-serversignature':
     require => Package[$php_web::web_service],
     context => "/files${php_web::config_dir}",
@@ -8,8 +8,8 @@ class php_web::apache::config {
       "set ${php_web::apache_config}/directive[last()+1] ServerSignature",
       "set ${php_web::apache_config}/*[self::directive='ServerSignature']/arg Off",
     ],
-    onlyif => "get ${php_web::apache_config}/*[self::directive='ServerSignature']/arg != Off",
-    notify => Service[$php_web::web_service],
+    onlyif  => "get ${php_web::apache_config}/*[self::directive='ServerSignature']/arg != Off",
+    notify  => Service[$php_web::web_service],
   }
 
   if $php_web::admin_email {
@@ -19,8 +19,8 @@ class php_web::apache::config {
         "set ${php_web::apache_config}/directive[last()+1] ServerAdmin",
         "set ${php_web::apache_config}/*[self::directive='ServerAdmin']/arg ${php_web::admin_email}",
       ],
-      onlyif => "get ${php_web::apache_config}/*[self::directive='ServerAdmin']/arg != ${php_web::admin_email}",
-      notify => Service[$php_web::web_service],
+      onlyif  => "get ${php_web::apache_config}/*[self::directive='ServerAdmin']/arg != ${php_web::admin_email}",
+      notify  => Service[$php_web::web_service],
     }
   }
 
@@ -52,8 +52,8 @@ class php_web::apache::config {
         "defnode sitesEnabled conf/${php_web::apache_config}/directive[last()+1] Include",
         "set \$sitesEnabled/arg 'sites-enabled/'",
       ],
-      onlyif => "match conf/${php_web::apache_config}/*[self::directive='Include']/arg[. = 'sites-enabled/'] size == 0",
-      notify => Service[$php_web::web_service],
+      onlyif  => "match conf/${php_web::apache_config}/*[self::directive='Include']/arg[. = 'sites-enabled/'] size == 0",
+      notify  => Service[$php_web::web_service],
     }
   }
 

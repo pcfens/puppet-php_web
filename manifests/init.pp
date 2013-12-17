@@ -19,9 +19,9 @@ class php_web (
 ) inherits php_web::params {
 
   validate_bool($spdy, $pagespeed, $mod_security, $apache_cas)
-  validate_string($server_email)
+  validate_string($admin_email)
 
-  if $cas and !($cas_login_url or $cas_validate_url){
+  if $apache_cas and !($cas_login_url or $cas_validate_url){
     fail('cas_login_url and cas_validate_url must be set to enable CAS')
   }
 
@@ -50,7 +50,7 @@ class php_web (
       if $apache_mods {
         info('php_web module cannot manage apache mods in the RedHat OS family')
       }
-      
+
       if $web_service == 'apache' {
         $web_user = 'apache'
       } elsif $web_service == 'nginx' {
@@ -60,16 +60,17 @@ class php_web (
     }
   }
 
+  $config_dir = "/etc/${web_service}"
+
   if !$::selinux and $manage_selinux {
     info('Ignoring the manage_selinux flag - selinux is disable or not present on this system')
   }
 
   $apache_config = $::osfamily ? {
-    'Debian' => "apache2.conf",
-    default => "httpd.conf",
+    'Debian' => 'apache2.conf',
+    default => 'httpd.conf',
   }
 
-  $config_dir = "/etc/${apache_service}"
 
   if $webserver == 'apache' {
     class { 'php_web::apache':

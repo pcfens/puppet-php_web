@@ -16,19 +16,19 @@ define php_web::vhost(
   $upload_limit = undef,
   $aliases      = [],
 ) {
- 
+
   $webserver = getparam(Class['php_web'], 'webserver')
   if !$user or !$group {
 
     if $::osfamily == 'Debian' {
-      $user_real = 'www-data' 
+      $user_real = 'www-data'
     } elsif $::osfamily == 'RedHat' {
       $user_real = $webserver ? {
         'nginx'  => 'nginx',
         'apache' => 'apache',
       }
     }
-    
+
     $group_real = $user_real
     $real_manage_user = false
   } elsif !$manage_user {
@@ -36,7 +36,7 @@ define php_web::vhost(
     $user_real = $user
     $group_real = $group
   } elsif !$uid or !$gid {
-     fail('No UID/GID set but is required here.')
+    fail('No UID/GID set but is required here.')
   } else {
     $real_manage_user = true
     $user_real = $user
@@ -50,25 +50,25 @@ define php_web::vhost(
   }
 
   if $alt_root {
-    $webroot_real = "$webroot_base/public_html"
+    $webroot_real = "${webroot_base}/public_html"
   } else {
     $webroot_real = $webroot_base
   }
-  
-  
+
+
   $user_shell = $::osfamily ? {
     Debian  => '/usr/sbin/nologin',
     RedHat  => '/sbin/nologin',
     default => '/bin/false',
-  } 
-  
+  }
+
   if $real_manage_user {
 
     group { $group_real:
-      gid    => $gid,
       ensure => present,
+      gid    => $gid,
     }
-    
+
     user { $user_real:
       ensure   => present,
       uid      => $uid,
@@ -76,9 +76,9 @@ define php_web::vhost(
       home     => $webroot_real,
       shell    => $user_shell,
       password => '!',
-      require => Group[$group],
+      require  => Group[$group],
     }
-    
+
     file { $webroot_real:
       ensure  => 'directory',
       mode    => '2764',
@@ -94,46 +94,46 @@ define php_web::vhost(
       group   => $group_real,
     }
   }
-  
 
-  file { "$php_web::enabled_sites/$domain":
-    ensure => link,
-    target => "$php_web::available_sites/$domain",
-    require => File["$php_web::available_sites/$domain"],
+
+  file { "${php_web::enabled_sites}/${domain}":
+    ensure  => link,
+    target  => "${php_web::available_sites}/${domain}",
+    require => File["${php_web::available_sites}/${domain}"],
     notify  => Service[$php_web::web_service],
   }
- 
+
   if !$fpm_custom {
-    file { "$php_web::php_pool/$domain.conf":
+    file { "${php_web::php_pool}/${domain}.conf":
       ensure  => present,
-      content => template("php_web/php-fpm/phpfpm.erb"),
+      content => template('php_web/php-fpm/phpfpm.erb'),
       notify  => Service[$php_web::php_service],
       require => Class['php_web'],
     }
   } else {
-    file { "$php_web::php_pool/$domain.conf":
+    file { "${php_web::php_pool}/${domain}.conf":
       ensure  => present,
       content => "puppet:///modules/php_web/custom_fpm/${domain}",
       notify  => Service[$php_web::php_service],
     }
   }
-  
+
   if !$disabled {
-    if !$vhost_custom {  
-      file { "$php_web::available_sites/$domain":
+    if !$vhost_custom {
+      file { "${php_web::available_sites}/${domain}":
         ensure  => present,
         content => template("php_web/${webserver}/phpvhost.erb"),
         notify  => Service[$php_web::web_service],
         require => [ File[$webroot_real] ],
       }
     } else {
-      file { "$php_web::available_sites/$domain":
+      file { "${php_web::available_sites}/${domain}":
         ensure => present,
         source => "puppet:///modules/php_web/vhost_custom/${domain}",
         notify => Service[$php_web::web_service],
       }
     }
-  } 
-  
-  
+  }
+
+
 }

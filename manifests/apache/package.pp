@@ -1,6 +1,6 @@
 class php_web::apache::package {
 
-  package { "${php_web::web_service}":
+  package { $php_web::web_service:
     ensure => installed,
   }
 

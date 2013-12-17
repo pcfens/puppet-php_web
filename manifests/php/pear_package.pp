@@ -21,10 +21,10 @@ define php_web::php::pear_package (
   }
 
   package { "pear-${repository}-${real_package}":
+    ensure   => $real_version,
     name     => $real_package,
     provider => 'pear',
     source   => $pear_source,
-    ensure   => $real_version,
     require  => Package['php-pear'],
   }
 

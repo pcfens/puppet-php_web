@@ -8,7 +8,7 @@ class php_web::php::package {
     'Debian' => 'php5-suhosin',
     default  => 'php-suhosin',
   }
- 
+
   if !$php_web::extra_php_packages and $php_web::suhosin {
     $php_pkgs = ['php-pear', $suhosin_package]
   } elsif $php_web::suhosin {
@@ -18,7 +18,7 @@ class php_web::php::package {
     $php_pkgs = concat($php_web::extra_php_packages, ['php-pear'])
   }
 
-  if $require_mariadb {
+  if $php_web::require_mariadb {
     package { $php_pkgs:
       ensure  => installed,
       require => [ Package[$php_web::php_service], Package['mariadb-server'] ],
@@ -33,7 +33,7 @@ class php_web::php::package {
     }
   }
 
-  php_web::php::pear_package { $php_web::pear_libs: 
+  php_web::php::pear_package { $php_web::pear_libs:
     require => [ Package[$php_web::php_service], Package['php-pear'] ],
   }
 

@@ -2,7 +2,7 @@ class php_web::params {
   $webserver = $::osfamily ? {
     'Debian' => 'apache',
     default  => 'apache',
-  } 
+  }
 
   $suhosin = $::osfamily ? {
     'Debian' => true,
