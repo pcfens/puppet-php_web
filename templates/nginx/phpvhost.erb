@@ -1,10 +1,10 @@
 server {
     listen 80;
-    server_name <%= @domain %> <% @aliases.each do |val| %> <%= val %> <% end %>;
+    server_name <%= @domain -%> <% @aliases.each do |val| %> <%= val -%><% end %>;
     
     access_log /var/log/nginx/<%= @domain %>.access.log;
 
-    root <%= @webroot_real %>;
+    root <%= @webroot_real -%>;
     index index.php index.html index.htm;
 
     location / {
