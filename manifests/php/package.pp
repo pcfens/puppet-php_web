@@ -27,8 +27,7 @@ class php_web::php::package {
   } else {
     package { $php_pkgs:
       ensure  => installed,
-      require => [ Package[$php_web::php_service], Package['mariadb-server'] ],
-      #require => Package[$php_web::php_service],
+      require => [ Package[$php_web::php_service] ],
       before  => [ Exec['install-phpcas'] ],
     }
   }
