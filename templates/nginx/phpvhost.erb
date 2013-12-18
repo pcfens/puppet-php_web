@@ -8,7 +8,11 @@ server {
     index index.php index.html index.htm;
 
     location / {
+        <% if @wordpress %>
+        try_files $uri $uri/ /index.php$args;
+        <% else %>
         try_files $uri $uri/ /index.html;
+        <% end %>
     }
 
     location ~\.php$ {
