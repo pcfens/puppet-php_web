@@ -22,13 +22,11 @@ class php_web::php::package {
     package { $php_pkgs:
       ensure  => installed,
       require => [ Package[$php_web::php_service], Package['mariadb-server'] ],
-      before  => [ Exec['install-phpcas'] ],
     }
   } else {
     package { $php_pkgs:
       ensure  => installed,
       require => [ Package[$php_web::php_service] ],
-      before  => [ Exec['install-phpcas'] ],
     }
   }
 
@@ -46,7 +44,7 @@ class php_web::php::package {
       command => 'pear install http://downloads.jasig.org/cas-clients/php/current.tgz',
       path    => ['/usr/local/bin', '/usr/bin'],
       creates => $phpcas,
-      require => Package['php-pear'],
+      require => [ Package['php-pear'], Package[$php_pkgs] ],
     }
   }
 
