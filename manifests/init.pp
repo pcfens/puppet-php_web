@@ -1,5 +1,6 @@
 class php_web (
   $webserver             = $php_web::params::webserver,
+  $vhost_root            = $php_web::params::vhost_root,
   $spdy                  = false,
   $pagespeed             = false,
   $suhosin               = $php_web::params::suhosin,
@@ -15,7 +16,7 @@ class php_web (
   $admin_email           = undef,
   $firewall_ports        = [80, 443],
   $manage_selinux        = true,
-  $require_mariadb       = $php_web::params::require_mariadb
+  $require_mariadb       = $php_web::params::require_mariadb,
 ) inherits php_web::params {
 
   validate_bool($spdy, $pagespeed, $mod_security, $apache_cas)

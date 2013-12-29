@@ -18,6 +18,7 @@ define php_web::vhost(
 ) {
 
   $webserver = getparam(Class['php_web'], 'webserver')
+  $vhost_root = getparam(Class['php_web'], 'vhost_root')
   if !$user or !$group {
 
     if $::osfamily == 'Debian' {
@@ -44,7 +45,7 @@ define php_web::vhost(
   }
 
   if !$webroot {
-    $webroot_base = "/var/www/vhosts/${domain}"
+    $webroot_base = "${vhost_root}/${domain}"
   } else {
     $webroot_base = $webroot
   }

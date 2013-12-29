@@ -10,6 +10,10 @@ class php_web::params {
     default  => false,
   }
 
+  $vhost_root = $::osfamily ? {
+    default => '/var/www/vhosts',
+  }
+
   $extra_apache_packages = $::osfamily ? {
     'Debian' => ['libapache2-mod-geoip'],
     default  => ['mod_ssl',
