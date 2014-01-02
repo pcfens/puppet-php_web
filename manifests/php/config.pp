@@ -19,10 +19,9 @@ class php_web::php::config {
     default  => '/etc/php-fpm/php.ini',
   }
 
-  # TODO: Make this a template
   file { $php_fpm_config:
     ensure => present,
-    source => 'puppet:///modules/php_web/php.ini',
+    content => template('php_web/php-fpm/php.ini.erb'),
     owner  => 'root',
     group  => 'root',
     notify => Service[$php_web::php_service],

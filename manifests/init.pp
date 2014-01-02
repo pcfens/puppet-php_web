@@ -14,6 +14,8 @@ class php_web (
   $pear_libs             = $php_web::params::pear_libs,
   $apache_mods           = $php_web::params::apache_mods,
   $admin_email           = undef,
+  $php_session_store     = 'files',
+  $php_session_save_path = '/tmp',
   $firewall_ports        = [80, 443],
   $manage_selinux        = true,
   $require_mariadb       = $php_web::params::require_mariadb,
