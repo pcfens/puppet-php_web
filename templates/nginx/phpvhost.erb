@@ -22,6 +22,11 @@ server {
         include fastcgi_params;
     }
 
+    <% @nginx_custom.each do |val| %>
+    <%= @val %>
+    <% end %>
+
+
     location ~/\.ht {
         deny all;
     }

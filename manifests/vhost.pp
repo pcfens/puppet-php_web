@@ -1,20 +1,21 @@
 define php_web::vhost(
-  $domain       = $title,
-  $user         = undef,
-  $uid          = undef,
-  $group        = undef,
-  $gid          = undef,
-  $manage_user  = true,
-  $disabled     = false,
-  $webroot      = undef,
-  $fpm_custom   = false,
-  $vhost_custom = false,
-  $disable_ldap = true,
-  $alt_root     = false,
-  $show_errors  = false,
-  $wordpress    = false,
-  $upload_limit = undef,
-  $aliases      = [],
+  $domain        = $title,
+  $user          = undef,
+  $uid           = undef,
+  $group         = undef,
+  $gid           = undef,
+  $manage_user   = true,
+  $disabled      = false,
+  $webroot       = undef,
+  $fpm_custom    = [],
+  $apache_custom = [],
+  $nginx_custom  = [],
+  $disable_ldap  = true,
+  $alt_root      = false,
+  $show_errors   = false,
+  $wordpress     = false,
+  $upload_limit  = undef,
+  $aliases       = [],
 ) {
 
   $webserver = getparam(Class['php_web'], 'webserver')
@@ -111,37 +112,20 @@ define php_web::vhost(
     notify  => Service[$php_web::web_service],
   }
 
-  if !$fpm_custom {
-    file { "${php_web::php_pool}/${domain}.conf":
-      ensure  => present,
-      content => template('php_web/php-fpm/phpfpm.erb'),
-      notify  => Service[$php_web::php_service],
-      require => Class['php_web'],
-    }
-  } else {
-    file { "${php_web::php_pool}/${domain}.conf":
-      ensure  => present,
-      content => "puppet:///modules/php_web/custom_fpm/${domain}",
-      notify  => Service[$php_web::php_service],
-    }
+  file { "${php_web::php_pool}/${domain}.conf":
+    ensure  => present,
+    content => template('php_web/php-fpm/phpfpm.erb'),
+    notify  => Service[$php_web::php_service],
+    require => Class['php_web'],
   }
 
   if !$disabled {
-    if !$vhost_custom {
-      file { "${php_web::available_sites}/${domain}":
-        ensure  => present,
-        content => template("php_web/${webserver}/phpvhost.erb"),
-        notify  => Service[$php_web::web_service],
-        require => [ File[$webroot_real] ],
-      }
-    } else {
-      file { "${php_web::available_sites}/${domain}":
-        ensure => present,
-        source => "puppet:///modules/php_web/vhost_custom/${domain}",
-        notify => Service[$php_web::web_service],
-      }
+    file { "${php_web::available_sites}/${domain}":
+      ensure  => present,
+      content => template("php_web/${webserver}/phpvhost.erb"),
+      notify  => Service[$php_web::web_service],
+      require => [ File[$webroot_real] ],
     }
   }
-
 
 }
