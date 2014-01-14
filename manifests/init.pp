@@ -84,5 +84,11 @@ class php_web (
       before => Class['php_web::php'],
     }
   }
+
+  exec { "/bin/mkdir -p ${vhost_root}":
+    creates => $vhost_root,
+    require => Class['php_web::php'],
+  }
+
   class { 'php_web::php': }
 }

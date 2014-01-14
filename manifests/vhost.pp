@@ -52,6 +52,13 @@ define php_web::vhost(
 
   if $alt_root {
     $webroot_real = "${webroot_base}/public_html"
+    file { $webroot_base:
+      ensure  => 'directory',
+      mode    => '2764',
+      owner   => $user_real,
+      group   => $group_real,
+      before  => File[$webroot_real],
+    }
   } else {
     $webroot_real = $webroot_base
   }
