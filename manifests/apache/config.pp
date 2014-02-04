@@ -24,7 +24,7 @@ class php_web::apache::config {
     }
   }
 
-  if $php_web::cas {
+  if $php_web::apache_cas {
     $cas_config = $::osfamily ? {
       'Debian' => "${php_web::config_dir}/mods-available/auth_cas.conf",
       default  => "${php_web::config_dir}/config.d/auth_cas.conf",

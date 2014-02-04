@@ -4,11 +4,18 @@ class php_web::params {
     default  => 'apache',
   }
 
-  $suhosin = $::osfamily ? {
-    'Debian' => true,
-    'RedHat' => false,
-    default  => false,
+  if $::osfamily == 'Debian' {
+    if $::operatingsystem == 'Ubuntu' and $::operatingsystemrelease == '12.04' {
+      $suhosin = true
+    } else {
+      $suhosin = false
+    }
+  } elsif $::osfamily == 'RedHat' {
+    $suhosin = false
+  } else {
+    $suhosin = false
   }
+
 
   $vhost_root = $::osfamily ? {
     default => '/var/www/vhosts',
