@@ -71,7 +71,13 @@ class php_web::apache::config {
     }
   }
 
-  file { "${php_web::enabled_sites}/000-default":
+  if versioncmp($::lsbdistrelease, '13.10') >= 0 {
+    $default_conf = '000-default.conf'
+  } else {
+    $default_conf = '000-default'
+  }
+
+  file { "${php_web::enabled_sites}/${default_conf}":
     ensure => absent,
     notify => Service[$php_web::web_service],
   }

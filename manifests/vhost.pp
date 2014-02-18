@@ -105,10 +105,10 @@ define php_web::vhost(
   }
 
 
-  file { "${php_web::enabled_sites}/${domain}":
+  file { "${php_web::enabled_sites}/${domain}.conf":
     ensure  => link,
-    target  => "${php_web::available_sites}/${domain}",
-    require => File["${php_web::available_sites}/${domain}"],
+    target  => "${php_web::available_sites}/${domain}.conf",
+    require => File["${php_web::available_sites}/${domain}.conf"],
     notify  => Service[$php_web::web_service],
   }
 
@@ -120,7 +120,7 @@ define php_web::vhost(
   }
 
   if !$disabled {
-    file { "${php_web::available_sites}/${domain}":
+    file { "${php_web::available_sites}/${domain}.conf":
       ensure  => present,
       content => template("php_web/${webserver}/phpvhost.erb"),
       notify  => Service[$php_web::web_service],
