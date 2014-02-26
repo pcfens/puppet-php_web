@@ -7,9 +7,8 @@ define php_web::vhost(
   $manage_user   = true,
   $disabled      = false,
   $webroot       = undef,
-  $fpm_custom    = [],
-  $apache_custom = [],
-  $nginx_custom  = [],
+  $fpm_custom    = undef,
+  $vhost_custom  = undef,
   $disable_ldap  = true,
   $alt_root      = false,
   $show_errors   = false,
@@ -112,19 +111,38 @@ define php_web::vhost(
     notify  => Service[$php_web::web_service],
   }
 
-  file { "${php_web::php_pool}/${domain}.conf":
-    ensure  => present,
-    content => template('php_web/php-fpm/phpfpm.erb'),
-    notify  => Service[$php_web::php_service],
-    require => Class['php_web'],
+
+  if $fpm_custom {
+    file { "${php_web::php_pool}/${domain}.conf":
+      ensure  => present,
+      source  => $fpm_custom,
+      notify  => Service[$php_web::php_service],
+      require => Class['php_web'],
+    }
+  } else {
+    file { "${php_web::php_pool}/${domain}.conf":
+      ensure  => present,
+      content => template('php_web/php-fpm/phpfpm.erb'),
+      notify  => Service[$php_web::php_service],
+      require => Class['php_web'],
+    }
   }
 
   if !$disabled {
-    file { "${php_web::available_sites}/${domain}.conf":
-      ensure  => present,
-      content => template("php_web/${webserver}/phpvhost.erb"),
-      notify  => Service[$php_web::web_service],
-      require => [ File[$webroot_real] ],
+    if $vhost_custom {
+      file { "${php_web::available_sites}/${domain}.conf":
+        ensure  => present,
+        source  => $vhost_custom,
+        notify  => Service[$php_web::web_service],
+        require => [ File[$webroot_real] ],
+      }
+    } else {
+      file { "${php_web::available_sites}/${domain}.conf":
+        ensure  => present,
+        content => template("php_web/${webserver}/phpvhost.erb"),
+        notify  => Service[$php_web::web_service],
+        require => [ File[$webroot_real] ],
+      }
     }
   }
 

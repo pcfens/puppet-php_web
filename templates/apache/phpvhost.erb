@@ -20,10 +20,6 @@
     ServerAlias <%= @val %>
     <% end %>
 
-    <% @apache_custom.each do |val| %>
-    <%= @val %>
-    <% end %>
-
     CustomLog ${APACHE_LOG_DIR}/<%= @domain %>.access.log vhost_combined
     ErrorLog ${APACHE_LOG_DIR}/<%= @domain %>.error.log
     
