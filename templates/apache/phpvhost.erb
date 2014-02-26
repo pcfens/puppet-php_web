@@ -5,7 +5,7 @@
     DocumentRoot <%= @webroot_real %>
     ServerName <%= @domain %>
 
-    <% if @wordpress %>
+    <% if @index_fallback %>
     <Directory <%= @webroot_real %>>
     <IfModule mod_rewrite.c>
         RewriteEngine On

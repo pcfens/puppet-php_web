@@ -8,7 +8,7 @@ server {
     index index.php index.html index.htm;
 
     location / {
-        <% if @wordpress %>
+        <% if @index_fallback %>
         try_files $uri $uri/ /index.php$args;
         <% else %>
         try_files $uri $uri/ /index.html;
