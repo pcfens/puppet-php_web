@@ -1,94 +1,25 @@
 class php_web (
-  $webserver             = $php_web::params::webserver,
-  $vhost_root            = $php_web::params::vhost_root,
-  $spdy                  = false,
-  $pagespeed             = false,
-  $suhosin               = $php_web::params::suhosin,
-  $mod_security          = false,
-  $php_cas               = false,
-  $apache_cas            = false,
-  $cas_login_url         = undef,
-  $cas_validate_url      = undef,
-  $extra_apache_packages = $php_web::params::extra_apache_packages,
-  $extra_php_packages    = $php_web::params::extra_php_packages,
-  $pear_libs             = $php_web::params::pear_libs,
-  $apache_mods           = $php_web::params::apache_mods,
-  $admin_email           = undef,
-  $php_session_store     = 'files',
-  $php_session_save_path = '/tmp',
-  $firewall_ports        = [80, 443],
-  $manage_selinux        = true,
-  $require_mariadb       = $php_web::params::require_mariadb,
-) inherits php_web::params {
+  $service_ensure        = 'running',
+  $webserver             = $::php_web::params::webserver,
+  $vhost_root            = '/var/www',
+  $apache_mods           = $::php_web::params::apache_mods,
+  $apache_params         = {},
+  $php_ini_params        = {},
+) inherits ::php_web::params {
 
-  validate_bool($spdy, $pagespeed, $mod_security, $apache_cas)
-  validate_string($admin_email)
+  validate_string($serveradmin, $service_ensure, $webserver)
+  validate_array($apache_mods)
+  validate_hash($apache_params, $php_ini_params)
 
-  if $apache_cas and !($cas_login_url or $cas_validate_url){
-    fail('cas_login_url and cas_validate_url must be set to enable CAS')
-  }
-
-  case $::osfamily {
-    'Debian': {
-      $web_service = downcase($webserver) ? {
-        'apache' => 'apache2',
-        'nginx'  => 'nginx',
-      }
-      $available_sites = "/etc/${web_service}/sites-available"
-      $enabled_sites = "/etc/${web_service}/sites-enabled"
-      $php_pool = '/etc/php5/fpm/pool.d'
-      $php_service = 'php5-fpm'
-      $web_user = 'www-data'
-
-    }
-    default: {
-      $web_service = downcase($webserver) ? {
-        'apache' => 'httpd',
-        'nginx'  => 'nginx',
-      }
-      $available_sites = "/etc/${web_service}/sites-available"
-      $enabled_sites = "/etc/${web_service}/sites-enabled"
-      $php_pool = '/etc/php-fpm.d'
-      $php_service = 'php-fpm'
-      if $apache_mods {
-        info('php_web module cannot manage apache mods in the RedHat OS family')
-      }
-
-      if $web_service == 'apache' {
-        $web_user = 'apache'
-      } elsif $web_service == 'nginx' {
-        $web_user = 'nginx'
-      }
-
-    }
-  }
-
-  $config_dir = "/etc/${web_service}"
-
-  if !$::selinux and $manage_selinux {
-    info('Ignoring the manage_selinux flag - selinux is disable or not present on this system')
-  }
-
-  $apache_config = $::osfamily ? {
-    'Debian' => 'apache2.conf',
-    default => 'httpd.conf',
-  }
-
+  class { '::php_web::php': }
 
   if $webserver == 'apache' {
-    class { 'php_web::apache':
-      before => Class['php_web::php'],
+    class { '::php_web::apache':
+      require => Class['php::fpm::daemon']
     }
   } elsif $webserver == 'nginx' {
-    class { 'php_web::nginx':
-      before => Class['php_web::php'],
-    }
+    fail('nginx is not supported yet')
   }
 
-  exec { "/bin/mkdir -p ${vhost_root}":
-    creates => $vhost_root,
-    require => Class['php_web::php'],
-  }
 
-  class { 'php_web::php': }
 }

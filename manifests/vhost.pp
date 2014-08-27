@@ -1,149 +1,145 @@
-define php_web::vhost(
-  $domain         = $title,
-  $user           = undef,
-  $uid            = undef,
-  $group          = undef,
-  $gid            = undef,
-  $manage_user    = true,
-  $disabled       = false,
-  $webroot        = undef,
-  $fpm_custom     = undef,
-  $vhost_custom   = undef,
-  $disable_ldap   = true,
-  $alt_root       = false,
-  $show_errors    = false,
-  $index_fallback = false,
-  $upload_limit   = undef,
-  $aliases        = [],
+define php_web::vhost (
+  $domain            = $name,
+  $webroot           = undef,
+  $ensure            = 'present',
+  $user              = $::php_web::params::vhost_user,
+  $group             = $::php_web::params::vhost_user,
+  $uid               = $::php_web::params::uid,
+  $gid               = $::php_web::params::uid,
+  $manage_user       = $::php_web::params::manage_vhost_user,
+  $upload_limit      = '5M',
+  $show_errors       = false,
+  $webroot_base_mode = '2764',
+  $aliases           = [],
+  $apache_def        = {},
+  $php_fpm_def       = {},
 ) {
 
   $webserver = getparam(Class['php_web'], 'webserver')
   $vhost_root = getparam(Class['php_web'], 'vhost_root')
-  if !$user or !$group {
 
-    if $::osfamily == 'Debian' {
-      $user_real = 'www-data'
-    } elsif $::osfamily == 'RedHat' {
-      $user_real = $webserver ? {
-        'nginx'  => 'nginx',
-        'apache' => 'apache',
-      }
+  if !$uid or !$gid { # If the user is being managed we need to know UID/GID
+    fail('UID/GID is required')
+  }
+
+  if !defined(User[$user]) {
+    user { $user:
+      ensure   => $ensure,
+      uid      => $uid,
+      gid      => $gid,
+      home     => $webroot_real,
+      shell    => $::php_web::params::user_shell,
     }
+  }
 
-    $group_real = $user_real
-    $real_manage_user = false
-  } elsif !$manage_user {
-    $real_manage_user = false
-    $user_real = $user
-    $group_real = $group
-  } elsif !$uid or !$gid {
-    fail('No UID/GID set but is required here.')
-  } else {
-    $real_manage_user = true
-    $user_real = $user
-    $group_real = $group
+  if !defined(Group[$group]) {
+    group { $group:
+      ensure => $ensure,
+      gid    => $gid,
+    }
   }
 
   if !$webroot {
     $webroot_base = "${vhost_root}/${domain}"
+    $webroot_real = "${webroot_base}/public_html"
   } else {
     $webroot_base = $webroot
+    $webroot_real = "${webroot}/public_html"
   }
 
-  if $alt_root {
-    $webroot_real = "${webroot_base}/public_html"
+  if !defined(File[$webroot_real]) {
     file { $webroot_base:
       ensure  => 'directory',
       mode    => '2764',
-      owner   => $user_real,
-      group   => $group_real,
-      before  => File[$webroot_real],
-    }
-  } else {
-    $webroot_real = $webroot_base
-  }
-
-
-  $user_shell = $::osfamily ? {
-    Debian  => '/usr/sbin/nologin',
-    RedHat  => '/sbin/nologin',
-    default => '/bin/false',
-  }
-
-  if $real_manage_user {
-
-    group { $group_real:
-      ensure => present,
-      gid    => $gid,
+      owner   => $user,
+      group   => $group,
+      require => Exec["make_${webroot_real}"],
     }
 
-    user { $user_real:
-      ensure   => present,
-      uid      => $uid,
-      gid      => $gid,
-      home     => $webroot_real,
-      shell    => $user_shell,
-      password => '!',
-      require  => Group[$group],
-    }
-
-    file { $webroot_real:
-      ensure  => 'directory',
-      mode    => '2764',
-      owner   => $user_real,
-      group   => $group_real,
-      require => User[$user_real],
-    }
-  } else {
-    file { $webroot_real:
-      ensure  => 'directory',
-      mode    => '2764',
-      owner   => $user_real,
-      group   => $group_real,
+    # Running this as an exec with user and group set ensure that the dependent file
+    # resource actually set permissions as expected.
+    exec { "make_${webroot_real}":
+      creates => $webroot_real,
+      command => "mkdir -p ${webroot_real}",
+      path    => ['/bin', '/usr/bin'],
+      user    => $user,
+      group   => $group,
     }
   }
 
+  if $webserver == 'apache' {
+    $vhost = {
+      'servername'      => $domain,
+      'serveraliases'   => $aliases,
+      'docroot'         => $webroot_real,
+      'port'            => 80,
+      'ssl'             => false,
+      'fastcgi_server'  => "/usr/lib/cgi-bin/php5.fastcgi.${domain}",
+      'fastcgi_socket'  => "/var/run/${domain}.sock",
+      'custom_fragment' =>
+        "
+    AddHandler php5-fcgi .php
+    Action php5-fcgi /php5.fastcgi virtual
+    Alias /php5.fastcgi /usr/lib/cgi-bin/php5.fastcgi.${domain}
 
-  file { "${php_web::enabled_sites}/${domain}.conf":
-    ensure  => link,
-    target  => "${php_web::available_sites}/${domain}.conf",
-    require => File["${php_web::available_sites}/${domain}.conf"],
-    notify  => Service[$php_web::web_service],
-  }
-
-
-  if $fpm_custom {
-    file { "${php_web::php_pool}/${domain}.conf":
-      ensure  => present,
-      source  => $fpm_custom,
-      notify  => Service[$php_web::php_service],
-      require => Class['php_web'],
+        ",
     }
-  } else {
-    file { "${php_web::php_pool}/${domain}.conf":
-      ensure  => present,
-      content => template('php_web/php-fpm/phpfpm.erb'),
-      notify  => Service[$php_web::php_service],
-      require => Class['php_web'],
-    }
-  }
 
-  if !$disabled {
-    if $vhost_custom {
-      file { "${php_web::available_sites}/${domain}.conf":
-        ensure  => present,
-        source  => $vhost_custom,
-        notify  => Service[$php_web::web_service],
-        require => [ File[$webroot_real] ],
+    # If there's a custom_fragment in the declaration then
+    # it should be merge with what we already have otherwise things
+    # will break.
+    if is_string($apache_def['custom_fragment']) {
+      $vhost_override = {
+      'custom_fragment' =>
+        "${vhost['custom_fragment']} ${apache_def['custom_fragment']}",
       }
+      $upper_vhost = deep_merge($vhost, $vhost_override)
     } else {
-      file { "${php_web::available_sites}/${domain}.conf":
-        ensure  => present,
-        content => template("php_web/${webserver}/phpvhost.erb"),
-        notify  => Service[$php_web::web_service],
-        require => [ File[$webroot_real] ],
-      }
+      $upper_vhost = $vhost
     }
+    # Merge the definition with what we have here
+    # What we already have takes precedence since it's required
+    # for things to work.
+
+    # Until the future (4.x) parser is widely supported we need to do this
+    # array to hash hack so that the hash keys can be defined by variables
+    $apache_vhost_data = deep_merge($apache_def, $upper_vhost)
+    $apache_vhost = hash([ $domain, $apache_vhost_data ])
+
+    $apache_defaults = {
+      notify => Service['httpd']
+    }
+
+    # Create the vhost resource
+    create_resources('apache::vhost', $apache_vhost, $apache_defaults)
+  } elsif $webserver == 'nginx' {
+    # nginx stuff will go here
   }
 
+  $php_display_errors = $show_errors ? {
+    true  => 'on',
+    false => 'off',
+  }
+
+  $php_fpm = hash( [
+    $domain,  {
+      'user'            => $user,
+      'group'           => $group,
+      'listen'          => "/var/run/${domain}.sock",
+      'listen_owner'    => 'nobody',
+      'listen_group'    => 'nogroup',
+      'listen_mode'     => '0666',
+      'error_log'       => "${webroot_base}/php.error.log",
+      'php_admin_value' =>
+        {
+          'date.timezone'       => 'America/New_York',
+          'upload_max_filesize' => $upload_limit,
+          'post_max_size'       => $upload_limit,
+          'display_errors'      => $php_display_errors,
+        },
+    }])
+  $php_defaults = {
+    notify => Service['php5-fpm'],
+  }
+  create_resources('php::fpm::conf', deep_merge($php_fpm, $php_fpm_def), $php_defaults)
 }

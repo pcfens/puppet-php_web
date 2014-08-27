@@ -1,5 +1,12 @@
-name 'pcfens-php_web'
-version '0.0.1'
-dependency 'puppetlabs/stdlib', '>=3.3.0'
-dependency 'puppetlabs/firewall', '>=0.1.0'
-description "A module for managing PHP websites using PHP-FPM and Apache or nginx.  Tested on Ubuntu only"
+name    'pcfens-php_web'
+version '0.1.0'
+author 'pcfens'
+license 'Apache License, Version 2.0'
+summary 'Create and manage vhosts and and php-fpm pools from a single definition.'
+project_page 'https://github.com/pcfens/puppet-php_web'
+source 'https://github.com/pcfens/puppet-php_web'
+
+
+dependency 'puppetlabs/stdlib', '>= 4.3.0'
+dependency 'puppetlabs/apache', '>= 1.0.0'
+dependency 'thias/php', '>= 0.3.0'
