@@ -8,6 +8,8 @@ class php_web::params {
   $apache_mods = ['actions', 'alias', 'auth_basic', 'dir', 'fastcgi', 'headers',
     'mime', 'rewrite' ]
 
+  $php_mods = [ 'mysql', ]
+
   if $::osfamily == 'Debian' {
     $vhost_user = 'www-data'
     $uid = 33
