@@ -73,6 +73,8 @@ define php_web::vhost (
       'serveraliases'   => $aliases,
       'docroot'         => $webroot_real,
       'port'            => 80,
+      'docroot_owner'   => $user,
+      'docroot_group'   => $group,
       'ssl'             => false,
       'fastcgi_server'  => "/usr/lib/cgi-bin/php5.fastcgi.${domain}",
       'fastcgi_socket'  => "/var/run/${domain}.sock",
