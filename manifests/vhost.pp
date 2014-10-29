@@ -56,14 +56,20 @@ define php_web::vhost (
       require => Exec["make_${webroot_real}"],
     }
 
+    file { $webroot_real:
+      ensure  => 'directory',
+      mode    => '2764',
+      owner   => $user,
+      group   => $group,
+      require => Exec["make_${webroot_real}"],
+    }
+
     # Running this as an exec with user and group set ensure that the dependent file
     # resource actually set permissions as expected.
     exec { "make_${webroot_real}":
       creates => $webroot_real,
       command => "mkdir -p ${webroot_real}",
       path    => ['/bin', '/usr/bin'],
-      user    => $user,
-      group   => $group,
     }
   }
 
