@@ -5,6 +5,9 @@ class php_web::params {
 
   $php_disable_functions = ''
 
+  $use_php_set_handler = false
+  $plain_html = false
+
   $apache_mods = ['actions', 'alias', 'auth_basic', 'dir', 'fastcgi', 'headers',
     'mime', 'rewrite' ]
 

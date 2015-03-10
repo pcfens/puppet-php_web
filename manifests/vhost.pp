@@ -1,18 +1,20 @@
 define php_web::vhost (
-  $domain            = $name,
-  $webroot           = undef,
-  $ensure            = 'present',
-  $user              = $::php_web::params::vhost_user,
-  $group             = $::php_web::params::vhost_user,
-  $uid               = $::php_web::params::uid,
-  $gid               = $::php_web::params::uid,
-  $manage_user       = $::php_web::params::manage_vhost_user,
-  $upload_limit      = '5M',
-  $show_errors       = false,
-  $webroot_base_mode = '2764',
-  $aliases           = [],
-  $apache_def        = {},
-  $php_fpm_def       = {},
+  $domain              = $name,
+  $webroot             = undef,
+  $ensure              = 'present',
+  $use_php_set_handler = $::php_web::params::use_php_set_handler,
+  $plain_html          = $::php_web::params::plain_html,
+  $user                = $::php_web::params::vhost_user,
+  $group               = $::php_web::params::vhost_user,
+  $uid                 = $::php_web::params::uid,
+  $gid                 = $::php_web::params::uid,
+  $manage_user         = $::php_web::params::manage_vhost_user,
+  $upload_limit        = '5M',
+  $show_errors         = false,
+  $webroot_base_mode   = '2764',
+  $aliases             = [],
+  $apache_def          = {},
+  $php_fpm_def         = {},
 ) {
 
   $webserver = getparam(Class['php_web'], 'webserver')
@@ -74,23 +76,58 @@ define php_web::vhost (
   }
 
   if $webserver == 'apache' {
-    $vhost = {
-      'servername'      => $domain,
-      'serveraliases'   => $aliases,
-      'docroot'         => $webroot_real,
-      'port'            => 80,
-      'docroot_owner'   => $user,
-      'docroot_group'   => $group,
-      'ssl'             => false,
-      'fastcgi_server'  => "/usr/lib/cgi-bin/php5.fastcgi.${domain}",
-      'fastcgi_socket'  => "/var/run/${domain}.sock",
-      'custom_fragment' =>
-        "
-    AddHandler php5-fcgi .php
-    Action php5-fcgi /php5.fastcgi virtual
-    Alias /php5.fastcgi /usr/lib/cgi-bin/php5.fastcgi.${domain}
-
-        ",
+    if ! $use_php_set_handler and ! $plain_html {
+      $vhost = {
+        'servername'      => $domain,
+        'serveraliases'   => $aliases,
+        'docroot'         => $webroot_real,
+        'port'            => 80,
+        'docroot_owner'   => $user,
+        'docroot_group'   => $group,
+        'ssl'             => false,
+        'fastcgi_server'  => "/usr/lib/cgi-bin/php5.fastcgi.${domain}",
+        'fastcgi_socket'  => "/var/run/${domain}.sock",
+        'custom_fragment' =>
+          "
+      AddHandler php5-fcgi .php
+      Action php5-fcgi /php5.fastcgi virtual
+      Alias /php5.fastcgi /usr/lib/cgi-bin/php5.fastcgi.${domain}
+          ",
+      }
+    } elsif $use_php_set_handler and ! $plain_html {
+      $vhost = {
+        'servername'      => $domain,
+        'serveraliases'   => $aliases,
+        'docroot'         => $webroot_real,
+        'port'            => 80,
+        'docroot_owner'   => $user,
+        'docroot_group'   => $group,
+        'ssl'             => false,
+        'fastcgi_server'  => "/usr/lib/cgi-bin/php5.fastcgi.${domain}",
+        'fastcgi_socket'  => "/var/run/${domain}.sock",
+        'directories'     => [
+          {
+            path       => '\.php$',
+            sethandler => 'php5-fcgi',
+            provider   => 'filesmatch',
+          },
+        ],
+        'custom_fragment' =>
+          "
+      Action php5-fcgi /php5.fastcgi virtual
+      Alias /php5.fastcgi /usr/lib/cgi-bin/php5.fastcgi.${domain}
+          ",
+      }
+    } elsif $plain_html {
+      $vhost = {
+        'servername'      => $domain,
+        'serveraliases'   => $aliases,
+        'docroot'         => $webroot_real,
+        'port'            => 80,
+        'docroot_owner'   => $user,
+        'docroot_group'   => $group,
+        'ssl'             => false,
+      }
     }
 
     # If there's a custom_fragment in the declaration then
@@ -149,5 +186,7 @@ define php_web::vhost (
   $php_defaults = {
     notify => Service['php5-fpm'],
   }
-  create_resources('php::fpm::conf', deep_merge($php_fpm, $php_fpm_def), $php_defaults)
+  if ! $plain_html {
+    create_resources('php::fpm::conf', deep_merge($php_fpm, $php_fpm_def), $php_defaults)
+  }
 }
