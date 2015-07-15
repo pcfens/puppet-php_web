@@ -26,11 +26,11 @@ define php_web::vhost (
 
   if !defined(User[$user]) {
     user { $user:
-      ensure   => $ensure,
-      uid      => $uid,
-      gid      => $gid,
-      home     => $webroot_real,
-      shell    => $::php_web::params::user_shell,
+      ensure => $ensure,
+      uid    => $uid,
+      gid    => $gid,
+      home   => $webroot_real,
+      shell  => $::php_web::params::user_shell,
     }
   }
 
@@ -167,7 +167,7 @@ define php_web::vhost (
   }
 
   $php_fpm = hash( [
-    $domain,  {
+    $domain,  deep_merge({
       'user'            => $user,
       'group'           => $group,
       'listen'          => "/var/run/${domain}.sock",
@@ -182,11 +182,14 @@ define php_web::vhost (
           'post_max_size'       => $upload_limit,
           'display_errors'      => $php_display_errors,
         },
-    }])
+    }, $php_fpm_def) ]
+  )
+
   $php_defaults = {
     notify => Service['php5-fpm'],
   }
+
   if ! $plain_html {
-    create_resources('php::fpm::conf', deep_merge($php_fpm, $php_fpm_def), $php_defaults)
+    create_resources(php::fpm::conf, $php_fpm, $php_defaults)
   }
 }
