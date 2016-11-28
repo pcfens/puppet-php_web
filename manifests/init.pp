@@ -8,16 +8,14 @@ class php_web (
   $php_ini_params        = {},
 ) inherits ::php_web::params {
 
-  validate_string($serveradmin, $service_ensure, $webserver)
+  validate_string($service_ensure, $webserver)
   validate_array($apache_mods)
   validate_hash($apache_params, $php_ini_params)
 
-  class { '::php_web::php': }
+  include ::php_web::php
 
   if $webserver == 'apache' {
-    class { '::php_web::apache':
-      require => Class['php::fpm::daemon']
-    }
+    include ::php_web::apache
   } elsif $webserver == 'nginx' {
     fail('nginx is not supported yet')
   }

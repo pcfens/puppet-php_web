@@ -152,7 +152,7 @@ define php_web::vhost (
     $apache_vhost = hash([ $domain, $apache_vhost_data ])
 
     $apache_defaults = {
-      notify => Service['httpd']
+      notify => Service['httpd'],
     }
 
     # Create the vhost resource
@@ -174,22 +174,18 @@ define php_web::vhost (
       'listen_owner'    => 'nobody',
       'listen_group'    => 'nogroup',
       'listen_mode'     => '0666',
-      'error_log'       => "${webroot_base}/php.error.log",
       'php_admin_value' =>
         {
           'date.timezone'       => 'America/New_York',
           'upload_max_filesize' => $upload_limit,
           'post_max_size'       => $upload_limit,
           'display_errors'      => $php_display_errors,
+          'error_log'       => "${webroot_base}/php.error.log",
         },
     }, $php_fpm_def) ]
   )
 
-  $php_defaults = {
-    notify => Service['php5-fpm'],
-  }
-
   if ! $plain_html {
-    create_resources(php::fpm::conf, $php_fpm, $php_defaults)
+    create_resources(php::fpm::pool, $php_fpm)
   }
 }

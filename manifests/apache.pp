@@ -1,9 +1,7 @@
 # Private Class
 class php_web::apache {
   if $::lsbdistcodename == 'trusty' {
-    if !defined(Class['apt']){
-      class { 'apt': }
-    }
+    include ::apt
 
     apt::source { 'multiverse':
       location => 'http://archive.ubuntu.com/ubuntu',
@@ -25,7 +23,7 @@ class php_web::apache {
 
   $apache_super = {
     'default_vhost' => false,
-    'default_mods'  => $install_mods
+    'default_mods'  => $install_mods,
   }
 
   $apache_parameters = deep_merge($::php_web::apache_params, $apache_super)
