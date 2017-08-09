@@ -13,6 +13,8 @@ class php_web::params {
 
   $php_mods = [ 'mysql', ]
 
+  $manage_vhost_user = true
+
   if $::osfamily == 'Debian' {
     $vhost_user = 'www-data'
     $uid = 33
