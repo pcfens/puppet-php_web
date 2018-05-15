@@ -8,8 +8,8 @@ class php_web::php {
 
   $prefix = $::osfamily ? {
     'Debian' => $::lsbdistrelease ? {
-      '16.04' => 'php-',
-      default => 'php5-',
+      '14.04' => 'php5-',
+      default => 'php-',
     },
     default  => 'php-',
   }
