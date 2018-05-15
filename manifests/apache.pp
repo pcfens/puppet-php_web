@@ -17,7 +17,10 @@ class php_web::apache {
     }
   }
 
-  $required_mods = ['actions', 'alias', 'fastcgi' ]
+  $required_mods = $::lsbdistrelease ? {
+    '18.04' => ['actions', 'alias', 'fcgi' ],
+    default => ['actions', 'alias', 'fastcgi' ]
+  }
 
   $install_mods = union($::php_web::apache_mods, $required_mods)
 
