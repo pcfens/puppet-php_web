@@ -18,7 +18,7 @@ class php_web::apache {
   }
 
   $required_mods = $::lsbdistrelease ? {
-    '18.04' => ['actions', 'alias', 'fcgi' ],
+    '18.04' => ['actions', 'alias', 'fcgid' ],
     default => ['actions', 'alias', 'fastcgi' ]
   }
 
